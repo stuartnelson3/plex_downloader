@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 type request struct {
@@ -38,6 +39,7 @@ func main() {
 	go func() {
 		for req := range sftpc {
 			go func() {
+				start := time.Now()
 				fmt.Printf("starting request for %s to %s\n", req.path(), req.dst())
 				cmd := exec.CommandContext(ctx, "sftp", "-r", fmt.Sprintf("%s:%s", *srcServer, req.path()), req.dst())
 
@@ -47,6 +49,7 @@ func main() {
 					fmt.Printf("couldn't run command: %v\n", err)
 					return
 				}
+				fmt.Printf("finished downloading %s to %s. time: %v\n", req.path(), req.dst(), time.Since(start))
 			}()
 		}
 	}()
