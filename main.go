@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -18,11 +19,19 @@ type request struct {
 }
 
 func (r *request) path() string {
-	return strings.Split(r.Link, *pathSplit)[1]
+	p, err := url.PathUnescape(r.Link)
+	if err != nil {
+		panic(err)
+	}
+	return strings.Split(p, *pathSplit)[1]
 }
 
 func (r *request) dst() string {
 	return "/var/lib/plexmediaserver/" + r.Destination
+}
+
+func (r *request) sftpCmd(ctx context.Context) *exec.Cmd {
+	return exec.CommandContext(ctx, "sftp", "-r", fmt.Sprintf(`%s:"%s"`, *srcServer, r.path()), r.dst())
 }
 
 var (
@@ -41,7 +50,8 @@ func main() {
 			go func() {
 				start := time.Now()
 				fmt.Printf("starting request for %s to %s\n", req.path(), req.dst())
-				cmd := exec.CommandContext(ctx, "sftp", "-r", fmt.Sprintf("%s:%s", *srcServer, req.path()), req.dst())
+
+				cmd := req.sftpCmd(ctx)
 
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr

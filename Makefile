@@ -7,3 +7,8 @@ transfer_plex: main.go
 
 scp: transfer_plex
 	scp $< plex@minty:/var/lib/plexmediaserver
+
+test:
+	go test . -v -split "roy_rogers/" -src.server roy@rogers.biz
+
+.PHONY: test
