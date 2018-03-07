@@ -46,8 +46,8 @@ func main() {
 	flag.Parse()
 
 	go func() {
-		for req := range sftpc {
-			go func() {
+		for r := range sftpc {
+			go func(req *request) {
 				start := time.Now()
 				fmt.Printf("starting request for %s to %s\n", req.path(), req.dst())
 
@@ -60,7 +60,7 @@ func main() {
 					return
 				}
 				fmt.Printf("finished downloading %s to %s. time: %v\n", req.path(), req.dst(), time.Since(start))
-			}()
+			}(r)
 		}
 	}()
 
